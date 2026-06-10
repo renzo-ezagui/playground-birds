@@ -394,6 +394,17 @@ export function setupUI(world: World): void {
   ));
 
   sidebar.appendChild(groupLabel('— World —'));
+
+  const scaleRow = document.createElement('label');
+  scaleRow.className = 'follow-row';
+  const scaleCheck = document.createElement('input');
+  scaleCheck.type = 'checkbox';
+  scaleCheck.checked = true;
+  scaleCheck.addEventListener('change', () => { world.showScaleRef = scaleCheck.checked; });
+  scaleRow.appendChild(scaleCheck);
+  scaleRow.appendChild(document.createTextNode(' Scale reference (100 m²)'));
+  sidebar.appendChild(scaleRow);
+
   sidebar.appendChild(section('Boundary',
     'Repulsión cuadrática desde los bordes del mundo. El margin define la zona segura visible. La fuerza crece de 0 (borde del margin) hasta máxima (pared), sin oscilación.',
     worldSlider('Safe Margin', 'boundaryMargin', 40, 300, 5,   world),
