@@ -66,6 +66,8 @@ export abstract class Bird {
   followed = false;
   trailColor = '';
   trail: Vec2[] = [];
+  z = Math.random() * 100; // altitude (0 = ground, altitudeMax = ceiling)
+  vz = 0;                  // vertical velocity
 
   // ── Class-level properties (set from static defaults at construction) ──
   maxSpeed!:    number;
@@ -90,6 +92,7 @@ export abstract class Bird {
   die(): void {
     this.dead = true;
     this.trail = [];
+    this.vz = 0;
     this.deathAngle = this.vel.angle();
     this.vel = new Vec2((Math.random() - 0.5) * 3, -(Math.random() + 0.5));
   }
@@ -149,6 +152,29 @@ export abstract class Bird {
     this.pos = this.pos.add(this.vel);
     this.acc = new Vec2(0, 0);
 
+    // Z physics — altitude layer separation
+    const altMax = world.config.altitudeMax;
+    let fz = (Math.random() - 0.5) * 0.04; // vertical wander
+
+    // Z separation: XY-close birds push to different altitude layers
+    const sepR = world.config.separationRadius + this.size;
+    for (const other of world.birds) {
+      if (other === this || other.dead) continue;
+      const xyDist = this.pos.sub(other.pos).mag();
+      if (xyDist < sepR) {
+        const dz = this.z - other.z;
+        const sign = dz === 0 ? (Math.random() > 0.5 ? 1 : -1) : Math.sign(dz);
+        fz += sign * 0.12 * (1 - xyDist / sepR);
+      }
+    }
+
+    // Z boundary: soft push away from floor and ceiling
+    if (this.z < 20)          fz += (20 - this.z) * 0.02;
+    if (this.z > altMax - 20) fz -= (this.z - (altMax - 20)) * 0.02;
+
+    this.vz = (this.vz + fz) * 0.95; // apply + drag
+    this.z = Math.max(0, Math.min(altMax, this.z + this.vz));
+
     if (this.followed) {
       this.trail.push(this.pos.clone());
       if (this.trail.length > 2000) this.trail.shift();
@@ -171,21 +197,44 @@ export abstract class Bird {
     ctx.globalAlpha = 1;
   }
 
-  draw(ctx: CanvasRenderingContext2D): void {
+  draw(ctx: CanvasRenderingContext2D, altitudeMax = 200): void {
     if (this.dead) {
       drawBird(ctx, this.pos.x, this.pos.y, this.deathAngle, this.size, this.size * 0.4, '#e53e3e');
       return;
     }
+
+    const zRatio      = Math.max(0, Math.min(1, this.z / altitudeMax));
+    const renderedSize = this.size * (1 - zRatio * 0.4); // shrinks 40% at ceiling
+    const alpha        = 1 - zRatio * 0.35;              // fades 35% at ceiling
+
+    // shadow: offset and fade grow with altitude
+    if (this.z > 3) {
+      ctx.save();
+      ctx.globalAlpha = 0.14 * (1 - zRatio * 0.7);
+      ctx.fillStyle = '#3a2a10';
+      ctx.beginPath();
+      ctx.ellipse(
+        this.pos.x, this.pos.y + this.z * 0.12,
+        renderedSize * 0.7, renderedSize * 0.25,
+        0, 0, Math.PI * 2,
+      );
+      ctx.fill();
+      ctx.restore();
+    }
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
     const flapRate = 0.006 + this.vel.mag() * 0.002;
-    const wingY = Math.sin(Date.now() * flapRate + this.wingPhase) * this.size * 0.6;
-    drawBird(ctx, this.pos.x, this.pos.y, this.vel.angle(), this.size, wingY, this.color);
+    const wingY = Math.sin(Date.now() * flapRate + this.wingPhase) * renderedSize * 0.6;
+    drawBird(ctx, this.pos.x, this.pos.y, this.vel.angle(), renderedSize, wingY, this.color);
+    ctx.restore();
 
     if (this.spawning) {
       ctx.save();
       ctx.beginPath();
-      ctx.arc(this.pos.x, this.pos.y, this.size * 2, 0, Math.PI * 2);
+      ctx.arc(this.pos.x, this.pos.y, renderedSize * 2, 0, Math.PI * 2);
       ctx.strokeStyle = this.color;
-      ctx.globalAlpha = 0.25 + 0.15 * Math.sin(Date.now() * 0.006);
+      ctx.globalAlpha = alpha * (0.25 + 0.15 * Math.sin(Date.now() * 0.006));
       ctx.lineWidth = 1.5;
       ctx.setLineDash([4, 4]);
       ctx.stroke();

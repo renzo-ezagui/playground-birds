@@ -30,6 +30,7 @@ export interface WorldConfig {
   visionWeight: number;
   headOnRadius: number;
   headOnWeight: number;
+  altitudeMax: number;
 }
 
 export class World {
@@ -60,6 +61,7 @@ export class World {
     visionWeight:      1.3,
     headOnRadius:      140,
     headOnWeight:      2.2,
+    altitudeMax:       200,
   };
 
   poi: Vec2 | null = null;
@@ -84,7 +86,6 @@ export class World {
     this.width = canvas.width;
     this.height = canvas.height;
     this.cursor = new Vec2(this.width / 2, this.height / 2);
-    this.prevCursor = this.cursor.clone();
 
     window.addEventListener('mousemove', (e) => {
       const rect = this.canvas.getBoundingClientRect();
@@ -228,7 +229,9 @@ export class World {
         const b = birds[j];
         if (a.dead || b.dead || a.spawning || b.spawning) continue;
         if (this.nearBoundary(a) || this.nearBoundary(b)) continue;
-        if (a.pos.sub(b.pos).mag() < (a.size + b.size) * 0.9) {
+        const d2 = a.pos.sub(b.pos).mag();
+        const dz = a.z - b.z;
+        if (Math.sqrt(d2 * d2 + dz * dz) < (a.size + b.size) * 0.9) {
           a.die();
           b.die();
         }
@@ -368,8 +371,10 @@ export class World {
     this.checkCollisions();
     const behaviors = this.behaviors();
     for (const bird of this.birds) bird.update(behaviors, this);
-    for (const bird of this.birds) bird.drawTrail(ctx);
-    for (const bird of this.birds) bird.draw(ctx);
+    // painter's algorithm: high birds drawn first, low birds on top
+    const byAltitude = [...this.birds].sort((a, b) => b.z - a.z);
+    for (const bird of byAltitude) bird.drawTrail(ctx);
+    for (const bird of byAltitude) bird.draw(ctx, this.config.altitudeMax);
     if (this.showCursorBird) this.drawCursorBird();
   }
 
