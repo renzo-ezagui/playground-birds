@@ -67,7 +67,6 @@ export class World {
   private lastCursorMove = 0;
   private cursorDir = 0;
   private cursorWingPhase = Math.random() * Math.PI * 2;
-  private prevCursor: Vec2;
 
   private seek = new SeekBehavior();
   private wander = new WanderBehavior();
@@ -92,7 +91,6 @@ export class World {
       const next = new Vec2(e.clientX - rect.left, e.clientY - rect.top);
       const delta = next.sub(this.cursor);
       if (delta.mag() > 0.5) this.cursorDir = delta.angle();
-      this.prevCursor = this.cursor;
       this.cursor = next;
       this.lastCursorMove = Date.now();
     });

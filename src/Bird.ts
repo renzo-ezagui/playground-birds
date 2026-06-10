@@ -131,7 +131,10 @@ export abstract class Bird {
     this.pos = this.pos.add(this.vel);
     this.acc = new Vec2(0, 0);
 
-    if (this.followed) this.trail.push(this.pos.clone());
+    if (this.followed) {
+      this.trail.push(this.pos.clone());
+      if (this.trail.length > 2000) this.trail.shift();
+    }
   }
 
   drawTrail(ctx: CanvasRenderingContext2D): void {
