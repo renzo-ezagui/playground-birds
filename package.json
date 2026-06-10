@@ -1,0 +1,12 @@
+{
+  "name": "birds",
+  "private": true,
+  "scripts": {
+    "build": "esbuild src/main.ts --bundle --outfile=dist/bundle.js",
+    "dev": "esbuild src/main.ts --bundle --outfile=dist/bundle.js --watch"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "typescript": "^5.8.0"
+  }
+}
