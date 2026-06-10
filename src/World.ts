@@ -185,7 +185,7 @@ export class World {
       { behavior: this.separation, weight: config.separationWeight, priority: true  },
       { behavior: this.boundary,   weight: config.boundaryWeight,   priority: true  },
       { behavior: this.headOn,     weight: config.headOnWeight,     priority: true  },
-      { behavior: this.seek,       weight: seeking * config.seekWeight              },
+      { behavior: this.seek,       weight: this.showCursorBird ? seeking * config.seekWeight : 0 },
       { behavior: this.wander,     weight: idle * config.wanderWeight + 0.2        },
       { behavior: this.attraction, weight: this.poi ? config.poiWeight : 0         },
       { behavior: this.vision,     weight: config.visionWeight                     },
@@ -237,6 +237,7 @@ export class World {
   }
 
   showScaleRef = true;
+  showCursorBird = true;
 
   // 1px ≈ 3.6cm at crow scale (size=14px ≈ 50cm body). House 10×10m = 280×280px.
   private drawScaleReference(): void {
@@ -369,7 +370,7 @@ export class World {
     for (const bird of this.birds) bird.update(behaviors, this);
     for (const bird of this.birds) bird.drawTrail(ctx);
     for (const bird of this.birds) bird.draw(ctx);
-    this.drawCursorBird();
+    if (this.showCursorBird) this.drawCursorBird();
   }
 
   start(): void {
