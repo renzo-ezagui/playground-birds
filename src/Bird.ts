@@ -133,11 +133,17 @@ export abstract class Bird {
 
     const desired = this.vel.add(this.acc);
     const currentAngle = this.vel.angle();
-    let diff = desired.angle() - currentAngle;
-    while (diff >  Math.PI) diff -= Math.PI * 2;
-    while (diff < -Math.PI) diff += Math.PI * 2;
-    const newAngle = currentAngle + Math.max(-this.maxTurnRate, Math.min(this.maxTurnRate, diff));
-    const speed = Math.min(this.maxSpeed, Math.max(0.8, desired.mag()));
+    // Only steer if desired vector is large enough to determine a meaningful direction.
+    // When forces nearly cancel, maintain current heading — birds don't hover indecisively.
+    let newAngle = currentAngle;
+    if (desired.mag() > 0.05) {
+      let diff = desired.angle() - currentAngle;
+      while (diff >  Math.PI) diff -= Math.PI * 2;
+      while (diff < -Math.PI) diff += Math.PI * 2;
+      newAngle = currentAngle + Math.max(-this.maxTurnRate, Math.min(this.maxTurnRate, diff));
+    }
+    // Minimum speed is a fraction of maxSpeed — birds always fly forward, never stop.
+    const speed = Math.min(this.maxSpeed, Math.max(this.maxSpeed * 0.55, desired.mag()));
     this.vel = Vec2.fromAngle(newAngle, speed);
 
     this.pos = this.pos.add(this.vel);
