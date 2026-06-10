@@ -44,12 +44,13 @@ export class SeparationBehavior implements Behavior {
   radius = 65;
 
   steer(bird: Bird, world: World): Vec2 {
+    const r = this.radius + bird.size;
     let steer = new Vec2(0, 0);
     let count = 0;
     for (const other of world.birds) {
       if (other === bird || other.dead) continue;
       const d = bird.pos.sub(other.pos).mag();
-      if (d > 0 && d < this.radius) {
+      if (d > 0 && d < r) {
         // inverse square weighting (Reynolds '87): more natural damping than 1/d
         steer = steer.add(bird.pos.sub(other.pos).norm().scale(1 / (d * d)));
         count++;
@@ -66,6 +67,7 @@ export class AlignmentBehavior implements Behavior {
   private readonly fovDot = -0.5; // dot < -0.5 → more than ~120° behind → skip
 
   steer(bird: Bird, world: World): Vec2 {
+    const r = this.radius + bird.size * 0.5;
     const myDir = bird.vel.norm();
     let sum = new Vec2(0, 0);
     let count = 0;
@@ -73,7 +75,7 @@ export class AlignmentBehavior implements Behavior {
       if (other === bird || other.dead) continue;
       const toOther = other.pos.sub(bird.pos);
       const dist = toOther.mag();
-      if (dist >= this.radius) continue;
+      if (dist >= r) continue;
       if (myDir.x * toOther.x + myDir.y * toOther.y < this.fovDot * dist) continue;
       sum = sum.add(other.vel);
       count++;
@@ -88,6 +90,7 @@ export class CohesionBehavior implements Behavior {
   private readonly fovDot = -0.5;
 
   steer(bird: Bird, world: World): Vec2 {
+    const r = this.radius + bird.size * 0.5;
     const myDir = bird.vel.norm();
     let sum = new Vec2(0, 0);
     let count = 0;
@@ -95,7 +98,7 @@ export class CohesionBehavior implements Behavior {
       if (other === bird || other.dead) continue;
       const toOther = other.pos.sub(bird.pos);
       const dist = toOther.mag();
-      if (dist >= this.radius) continue;
+      if (dist >= r) continue;
       if (myDir.x * toOther.x + myDir.y * toOther.y < this.fovDot * dist) continue;
       sum = sum.add(other.pos);
       count++;
@@ -112,6 +115,7 @@ export class HeadOnBehavior implements Behavior {
   private readonly dotThreshold = -0.7; // cos(135°) — roughly head-on
 
   steer(bird: Bird, world: World): Vec2 {
+    const r = this.radius + bird.size;
     const myDir = bird.vel.norm();
     let force = new Vec2(0, 0);
 
@@ -119,7 +123,7 @@ export class HeadOnBehavior implements Behavior {
       if (other === bird || other.dead || other.spawning) continue;
       const toOther = other.pos.sub(bird.pos);
       const dist = toOther.mag();
-      if (dist > this.radius || dist < 0.1) continue;
+      if (dist > r || dist < 0.1) continue;
 
       const otherDir = other.vel.norm();
       const dot = myDir.x * otherDir.x + myDir.y * otherDir.y;
@@ -131,7 +135,7 @@ export class HeadOnBehavior implements Behavior {
 
       // right vector in canvas coords (Y-down): (-dy, dx)
       const right = new Vec2(-myDir.y, myDir.x);
-      const strength = 1 - dist / this.radius;
+      const strength = 1 - dist / r;
       force = force.add(right.scale(strength));
     }
 
@@ -144,9 +148,9 @@ export class ForwardVisionBehavior implements Behavior {
   lookAhead = 80;
   raySpread = 1.2; // radians total
   rayCount  = 5;
-  private readonly sampleRadius = 28;
 
   steer(bird: Bird, world: World): Vec2 {
+    const sampleRadius = bird.size * 2;
     const heading = bird.vel.angle();
     let bestAngle = heading;
     let bestCount = Infinity;
@@ -159,7 +163,7 @@ export class ForwardVisionBehavior implements Behavior {
       let count = 0;
       for (const other of world.birds) {
         if (other === bird || other.dead) continue;
-        if (other.pos.sub(sample).mag() < this.sampleRadius) count++;
+        if (other.pos.sub(sample).mag() < sampleRadius) count++;
       }
 
       if (count < bestCount) { bestCount = count; bestAngle = angle; }
