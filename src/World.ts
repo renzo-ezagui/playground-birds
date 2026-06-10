@@ -236,6 +236,72 @@ export class World {
     }
   }
 
+  showScaleRef = true;
+
+  // 1px ≈ 3.6cm at crow scale (size=14px ≈ 50cm body). House 10×10m = 280×280px.
+  private drawScaleReference(): void {
+    if (!this.showScaleRef) return;
+    const { ctx, width, height } = this;
+    const cx = width / 2;
+    const cy = height / 2;
+
+    // lot boundary: ~15×13m = 420×364px
+    const lw = 420, lh = 364;
+    // house footprint: 10×10m = 280×280px
+    const hw = 280, hh = 280;
+
+    ctx.save();
+    ctx.globalAlpha = 0.07;
+
+    // lot fill
+    ctx.fillStyle = '#8a7a5a';
+    ctx.fillRect(cx - lw / 2, cy - lh / 2, lw, lh);
+
+    // house fill
+    ctx.fillStyle = '#c4a882';
+    ctx.fillRect(cx - hw / 2, cy - hh / 2, hw, hh);
+
+    ctx.globalAlpha = 0.18;
+    ctx.strokeStyle = '#7a6040';
+    ctx.lineWidth = 2;
+
+    // lot outline
+    ctx.strokeRect(cx - lw / 2, cy - lh / 2, lw, lh);
+
+    // house outline
+    ctx.lineWidth = 2.5;
+    ctx.strokeRect(cx - hw / 2, cy - hh / 2, hw, hh);
+
+    // internal walls — 3 rooms
+    ctx.lineWidth = 1.5;
+    // vertical divider (left third)
+    ctx.beginPath();
+    ctx.moveTo(cx - hw / 2 + 95, cy - hh / 2);
+    ctx.lineTo(cx - hw / 2 + 95, cy + hh / 2);
+    ctx.stroke();
+    // horizontal divider (top half of right section)
+    ctx.beginPath();
+    ctx.moveTo(cx - hw / 2 + 95, cy - 10);
+    ctx.lineTo(cx + hw / 2,      cy - 10);
+    ctx.stroke();
+
+    // door gaps (break wall lines)
+    ctx.fillStyle = '#f5f0e8';
+    ctx.globalAlpha = 0.5;
+    ctx.fillRect(cx - hw / 2 + 95 - 1, cy + 30, 3, 40);  // left door
+    ctx.fillRect(cx + 20, cy - 10 - 1, 40, 3);             // right door
+
+    // scale label
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = '#7a6040';
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('~100 m²', cx, cy + hh / 2 + 16);
+    ctx.fillText('~1 500 m² lot', cx, cy + lh / 2 + 14);
+
+    ctx.restore();
+  }
+
   private drawBorder(): void {
     const { ctx, width, height, config } = this;
     const m = config.boundaryMargin;
@@ -294,6 +360,7 @@ export class World {
   tick(): void {
     const { ctx, width, height } = this;
     ctx.clearRect(0, 0, width, height);
+    this.drawScaleReference();
     this.drawBorder();
     this.drawPOI();
     this.updateSpawning();
