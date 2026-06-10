@@ -179,16 +179,18 @@ export class World {
     this.vision.rayCount           = config.visionRays;
     this.headOn.radius             = config.headOnRadius;
 
+    // priority: true  → safety behaviors — get first claim on force budget (Reynolds '87)
+    // priority: false → social behaviors — get remaining budget after safety
     return [
-      { behavior: this.seek,       weight: seeking * config.seekWeight },
-      { behavior: this.wander,     weight: idle * config.wanderWeight + 0.2 },
-      { behavior: this.attraction, weight: this.poi ? config.poiWeight : 0 },
-      { behavior: this.headOn,     weight: config.headOnWeight },
-      { behavior: this.vision,     weight: config.visionWeight },
-      { behavior: this.separation, weight: config.separationWeight },
-      { behavior: this.alignment,  weight: config.alignmentWeight },
-      { behavior: this.cohesion,   weight: config.cohesionWeight },
-      { behavior: this.boundary,   weight: config.boundaryWeight },
+      { behavior: this.separation, weight: config.separationWeight, priority: true  },
+      { behavior: this.boundary,   weight: config.boundaryWeight,   priority: true  },
+      { behavior: this.headOn,     weight: config.headOnWeight,     priority: true  },
+      { behavior: this.seek,       weight: seeking * config.seekWeight              },
+      { behavior: this.wander,     weight: idle * config.wanderWeight + 0.2        },
+      { behavior: this.attraction, weight: this.poi ? config.poiWeight : 0         },
+      { behavior: this.vision,     weight: config.visionWeight                     },
+      { behavior: this.alignment,  weight: config.alignmentWeight                  },
+      { behavior: this.cohesion,   weight: config.cohesionWeight                   },
     ];
   }
 

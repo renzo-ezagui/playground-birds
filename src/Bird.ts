@@ -115,9 +115,20 @@ export abstract class Bird {
       return;
     }
 
-    for (const { behavior, weight } of behaviors) {
-      this.applyForce(behavior.steer(this, world).scale(weight));
+    // Reynolds '87: prioritized allocation — safety behaviors (separation, boundary,
+    // head-on) claim the force budget first. Social behaviors (cohesion, alignment,
+    // seek, wander) only receive what's left. Prevents cancellation of avoidance forces.
+    let safetyAcc = new Vec2(0, 0);
+    let socialAcc  = new Vec2(0, 0);
+    for (const { behavior, weight, priority } of behaviors) {
+      const f = behavior.steer(this, world).scale(weight);
+      if (priority) safetyAcc = safetyAcc.add(f);
+      else          socialAcc  = socialAcc.add(f);
     }
+    safetyAcc = safetyAcc.limit(this.maxForce);
+    const socialBudget = Math.max(0, this.maxForce - safetyAcc.mag());
+    socialAcc = socialAcc.limit(socialBudget);
+    this.acc = safetyAcc.add(socialAcc);
 
     const desired = this.vel.add(this.acc);
     const currentAngle = this.vel.angle();
