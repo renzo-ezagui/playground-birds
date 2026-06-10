@@ -343,6 +343,17 @@ export function setupUI(world: World): void {
   ));
 
   sidebar.appendChild(groupLabel('— Cursor —'));
+
+  const cursorRow = document.createElement('label');
+  cursorRow.className = 'follow-row';
+  const cursorCheck = document.createElement('input');
+  cursorCheck.type = 'checkbox';
+  cursorCheck.checked = true;
+  cursorCheck.addEventListener('change', () => { world.showCursorBird = cursorCheck.checked; });
+  cursorRow.appendChild(cursorCheck);
+  cursorRow.appendChild(document.createTextNode(' Show cursor bird'));
+  sidebar.appendChild(cursorRow);
+
   sidebar.appendChild(section('Seek',
     'Perseguir el cursor dentro del radio de influencia. El peso disminuye automáticamente cuando el cursor lleva quieto 1.5s (idle transition), dejando que Wander tome el control.',
     worldSlider('Influence Radius', 'cursorRadius', 50, 600, 10, world),
