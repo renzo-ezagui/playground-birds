@@ -9,6 +9,8 @@ export interface Behavior {
 export interface WeightedBehavior {
   behavior: Behavior;
   weight: number;
+  // true = safety behavior: gets priority allocation before social behaviors
+  priority?: boolean;
 }
 
 export class SeekBehavior implements Behavior {
@@ -48,7 +50,8 @@ export class SeparationBehavior implements Behavior {
       if (other === bird || other.dead) continue;
       const d = bird.pos.sub(other.pos).mag();
       if (d > 0 && d < this.radius) {
-        steer = steer.add(bird.pos.sub(other.pos).norm().scale(1 / d));
+        // inverse square weighting (Reynolds '87): more natural damping than 1/d
+        steer = steer.add(bird.pos.sub(other.pos).norm().scale(1 / (d * d)));
         count++;
       }
     }
@@ -59,16 +62,21 @@ export class SeparationBehavior implements Behavior {
 
 export class AlignmentBehavior implements Behavior {
   radius = 120;
+  // Reynolds '87: forward-weighted perception — ignore birds in rear ~90°
+  private readonly fovDot = -0.5; // dot < -0.5 → more than ~120° behind → skip
 
   steer(bird: Bird, world: World): Vec2 {
+    const myDir = bird.vel.norm();
     let sum = new Vec2(0, 0);
     let count = 0;
     for (const other of world.birds) {
       if (other === bird || other.dead) continue;
-      if (bird.pos.sub(other.pos).mag() < this.radius) {
-        sum = sum.add(other.vel);
-        count++;
-      }
+      const toOther = other.pos.sub(bird.pos);
+      const dist = toOther.mag();
+      if (dist >= this.radius) continue;
+      if (myDir.x * toOther.x + myDir.y * toOther.y < this.fovDot * dist) continue;
+      sum = sum.add(other.vel);
+      count++;
     }
     if (count === 0) return new Vec2(0, 0);
     return sum.scale(1 / count).setMag(bird.maxSpeed).sub(bird.vel).limit(bird.maxForce);
@@ -77,16 +85,20 @@ export class AlignmentBehavior implements Behavior {
 
 export class CohesionBehavior implements Behavior {
   radius = 150;
+  private readonly fovDot = -0.5;
 
   steer(bird: Bird, world: World): Vec2 {
+    const myDir = bird.vel.norm();
     let sum = new Vec2(0, 0);
     let count = 0;
     for (const other of world.birds) {
       if (other === bird || other.dead) continue;
-      if (bird.pos.sub(other.pos).mag() < this.radius) {
-        sum = sum.add(other.pos);
-        count++;
-      }
+      const toOther = other.pos.sub(bird.pos);
+      const dist = toOther.mag();
+      if (dist >= this.radius) continue;
+      if (myDir.x * toOther.x + myDir.y * toOther.y < this.fovDot * dist) continue;
+      sum = sum.add(other.pos);
+      count++;
     }
     if (count === 0) return new Vec2(0, 0);
     const center = sum.scale(1 / count);
