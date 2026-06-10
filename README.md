@@ -301,25 +301,27 @@ Served at `http://birds.lan` (Pi-hole DNS → Caddy reverse proxy → port 8094 
 
 ## Recommended Starting Config
 
-Good baseline for observing natural flocking with ~8–12 birds:
+Good baseline for observing natural flocking with ~8–12 birds, tuned to minimize avoidable deaths:
 
 | Setting | Value | Reason |
 |---|---|---|
-| Separation radius | 65 | Tight enough to prevent crowding |
-| Separation weight | 1.6 | Dominant short-range force |
+| Separation radius | 80 | Wide buffer — separation activates well before collision range |
+| Separation weight | 2.0 | Strongest force — short-range repulsion must win |
 | Alignment radius | 120 | Mid-range direction sharing |
-| Alignment weight | 1.0 | Moderate — lets birds drift |
-| Cohesion radius | 150 | Wider than separation |
-| Cohesion weight | 0.8 | Weaker than separation — loose flock |
+| Alignment weight | 0.8 | Supporting role — don't let it override separation |
+| Cohesion radius | 110 | Tighter than separation radius overlap to reduce the "pull zone without counterforce" gap |
+| Cohesion weight | 0.5 | Weak pull — loose flock, less rushing together |
 | Wander weight | 1.0 | Active autonomous movement |
-| Seek weight | 1.3 | Responsive to cursor |
+| Seek weight | 0.7 | Low — avoids all birds avalanching toward cursor simultaneously |
 | Boundary margin | 140 | Large safe zone, fewer boundary deaths |
 | Boundary weight | 1.8 | Firm but not jerky |
-| Head-on radius | 90 | Short — only near-misses |
-| Head-on weight | 1.8 | Strong enough to actually steer away |
+| Head-on radius | 140 | Detect early — at maxSpeed=4, two birds close 8px/frame, need ~17 frames of reaction time |
+| Head-on weight | 2.2 | Must overcome cohesion + wander that push birds together |
 | Vision look ahead | 80 | ~1 second of flight at speed 4 |
 | Vision spread | 1.2 rad | ~70° arc — forward-biased |
 | Vision rays | 5 | Fine enough resolution |
-| Vision weight | 1.0 | Gentle path smoothing |
+| Vision weight | 1.3 | Active path-clearing reduces crowding |
+
+**Key tuning insight:** cohesionRadius should be close to separationRadius. A large gap between them (e.g., cohesion=150, separation=65) creates a zone where cohesion pulls birds together with no counterforce, accelerating them toward collision. If birds are still dying frequently, reduce `seekWeight` first — it's the most common cause of mass-death cascades when all birds rush to the same cursor point.
 
 Mix Eagles and Crows to observe inter-species dynamics — Eagles' larger size and slower turn rate produce different collision patterns.
