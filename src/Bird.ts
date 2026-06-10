@@ -125,8 +125,9 @@ export abstract class Bird {
       if (priority) safetyAcc = safetyAcc.add(f);
       else          socialAcc  = socialAcc.add(f);
     }
-    safetyAcc = safetyAcc.limit(this.maxForce);
-    const socialBudget = Math.max(0, this.maxForce - safetyAcc.mag());
+    // Safety behaviors keep their full weighted force — no cap.
+    // Social behaviors only receive budget that safety didn't consume.
+    const socialBudget = Math.max(0, this.maxForce - Math.min(safetyAcc.mag(), this.maxForce));
     socialAcc = socialAcc.limit(socialBudget);
     this.acc = safetyAcc.add(socialAcc);
 
