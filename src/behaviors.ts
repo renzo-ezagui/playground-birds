@@ -39,7 +39,7 @@ export class WanderBehavior implements Behavior {
 }
 
 export class SeparationBehavior implements Behavior {
-  readonly radius = 65;
+  radius = 65;
 
   steer(bird: Bird, world: World): Vec2 {
     let steer = new Vec2(0, 0);
@@ -58,7 +58,7 @@ export class SeparationBehavior implements Behavior {
 }
 
 export class AlignmentBehavior implements Behavior {
-  readonly radius = 120;
+  radius = 120;
 
   steer(bird: Bird, world: World): Vec2 {
     let sum = new Vec2(0, 0);
@@ -76,7 +76,7 @@ export class AlignmentBehavior implements Behavior {
 }
 
 export class CohesionBehavior implements Behavior {
-  readonly radius = 150;
+  radius = 150;
 
   steer(bird: Bird, world: World): Vec2 {
     let sum = new Vec2(0, 0);
@@ -113,9 +113,9 @@ export class HeadOnBehavior implements Behavior {
       const dot = myDir.x * otherDir.x + myDir.y * otherDir.y;
       if (dot > this.dotThreshold) continue; // not head-on
 
-      // confirm converging: relative velocity toward each other
+      // skip if diverging: toOther · relVel > 0 means converging, < 0 means diverging
       const relVel = bird.vel.sub(other.vel);
-      if (toOther.x * relVel.x + toOther.y * relVel.y > 0) continue;
+      if (toOther.x * relVel.x + toOther.y * relVel.y < 0) continue;
 
       // right vector in canvas coords (Y-down): (-dy, dx)
       const right = new Vec2(-myDir.y, myDir.x);
@@ -153,7 +153,7 @@ export class ForwardVisionBehavior implements Behavior {
       if (count < bestCount) { bestCount = count; bestAngle = angle; }
     }
 
-    if (bestAngle === heading) return new Vec2(0, 0);
+    if (bestCount === 0 || bestAngle === heading) return new Vec2(0, 0);
     const desired = Vec2.fromAngle(bestAngle, bird.maxSpeed);
     return desired.sub(bird.vel).limit(bird.maxForce * 0.6);
   }
