@@ -416,6 +416,10 @@ export function setupUI(world: World): void {
   scaleRow.appendChild(document.createTextNode(' Scale reference (100 m²)'));
   sidebar.appendChild(scaleRow);
 
+  sidebar.appendChild(section('Altitude',
+    'Altura máxima de vuelo. Los pájaros se separan en capas verticales automáticamente: los XY-cercanos se empujan a altitudes distintas. Visual: tamaño y opacidad disminuyen con altitud, sombra offset crece.',
+    worldSlider('Max Height', 'altitudeMax', 50, 500, 10, world),
+  ));
   sidebar.appendChild(section('Boundary',
     'Repulsión cuadrática desde los bordes del mundo. El margin define la zona segura visible. La fuerza crece de 0 (borde del margin) hasta máxima (pared), sin oscilación.',
     worldSlider('Safe Margin', 'boundaryMargin', 40, 300, 5,   world),
