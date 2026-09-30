@@ -2,7 +2,7 @@
 
 Canvas 2D boid simulation built with TypeScript and esbuild. No framework, no runtime dependencies. Designed as a teaching tool for OOP concepts: abstract classes, inheritance, static vs instance properties, and emergent behavior from simple rules.
 
-Live at `birds.lan` on the homelab (ProBook via Caddy + Pi-hole).
+Live at `birds-dev.lan` (dev) / `https://birds.ezagui.dev` (prod) on the homelab — Coolify + Traefik.
 
 ---
 
@@ -288,14 +288,15 @@ npm install
 # Build bundle
 npm run build   # → dist/bundle.js via esbuild
 
-# Homelab deploy (Docker context targets ProBook)
-make build-birds    # build image + restart container
-make logs-birds     # tail logs
-make up-birds       # start
-make down-birds     # stop
+# Homelab deploy — Coolify auto-deploys on push (dev branch → birds-dev.lan,
+# main branch → birds.ezagui.dev). Manual trigger:
+coolify app deploy atm5b3uvvtjeh1uowvknkgvl   # dev
+coolify app deploy emk7b7zu74avqhr2hurtys6m   # prod
+coolify app logs <uuid>
 ```
 
-Served at `http://birds.lan` (Pi-hole DNS → Caddy reverse proxy → port 8094 on ProBook).
+Served via Traefik (Coolify), routed by its `*.lan`/`*.ezagui.dev` wildcard — no
+manual DNS/proxy config.
 
 ---
 
