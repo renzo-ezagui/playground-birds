@@ -8,3 +8,4 @@ world.add(Crow);
 world.add(Crow);
 setupUI(world);
 world.start();
+this is not valid typescript {{{ syntax error test
